@@ -1,6 +1,7 @@
 let { Chunks } = require('../Chunks');
 let { VueLoaderPlugin } = require('vue-loader');
 let AppendVueStylesPlugin = require('../webpackPlugins/Css/AppendVueStylesPlugin');
+let Log = require('../Log');
 
 class Vue {
     constructor() {
@@ -139,21 +140,23 @@ class Vue {
     }
 
     detectVueVersion() {
-        const vue = require('vue');
+        let vue;
 
-        if (!vue) {
-            return null;
+        try {
+            vue = require('vue');
+        } catch (e) {
+            return false;
         }
 
-        if (vue.version.test(/^3\./)) {
+        if (/^3\./.test(vue.version)) {
             return 3;
         }
 
-        if (vue.version.test(/^2\./)) {
+        if (/^2\./.test(vue.version)) {
             return 2;
         }
 
-        return null;
+        return false;
     }
 
     /**
@@ -163,13 +166,17 @@ class Vue {
         version = version || this.detectVueVersion();
 
         if (!version) {
-            throw new Error(
-                'Unable to detect vue version. Please specify a version when calling mix.vue'
+            Log.error(
+                `We couldn't find Vue in your project. Please ensure that it's installed (npm install vue). You can also explicitly set the version number: mix.vue({ version: 2 }).`
             );
+
+            throw new Error();
         }
 
         if (version !== 2 && version !== 3) {
-            throw new Error(`Unsupported Vue version ${version}`);
+            Log.error(`Vue ${version} is not yet supported by Laravel Mix.`);
+
+            throw new Error();
         }
 
         return parseInt(version);
